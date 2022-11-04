@@ -19,6 +19,7 @@ package bls12381
 import (
 	"math/big"
 	"runtime"
+    "fmt"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bls12-381/fp"
@@ -478,10 +479,12 @@ func (p *G1Jac) mulGLV(a *G1Jac, s *big.Int) *G1Jac {
 	for i := hiWordIndex; i >= 0; i-- {
 		mask := uint64(3) << 62
 		for j := 0; j < 32; j++ {
+            fmt.Println("double")
 			res.Double(&res).Double(&res)
 			b1 := (k1[i] & mask) >> (62 - 2*j)
 			b2 := (k2[i] & mask) >> (62 - 2*j)
 			if b1|b2 != 0 {
+                fmt.Println("add")
 				s := (b2<<2 | b1)
 				res.AddAssign(&table[s-1])
 			}

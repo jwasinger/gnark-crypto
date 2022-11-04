@@ -520,6 +520,7 @@ func BenchmarkG1JacScalarMul(b *testing.B) {
 	r := fr.Modulus()
 	scalar.SetString("5243587517512619047944770508185965837690552500527637822603658699938581184513", 10)
 	scalar.Add(&scalar, r)
+    fmt.Println(scalar.String())
 
 	var doubleAndAdd G1Jac
 
