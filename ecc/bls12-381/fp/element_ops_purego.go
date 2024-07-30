@@ -19,7 +19,9 @@
 
 package fp
 
-import "math/bits"
+import (
+	"math/bits"
+)
 
 // MulBy3 x *= 3 (mod q)
 func MulBy3(x *Element) {
@@ -66,7 +68,7 @@ func reduce(z *Element) {
 //
 // x and y must be less than q
 func (z *Element) Mul(x, y *Element) *Element {
-
+	MulCount++
 	// Implements CIOS multiplication -- section 2.3.2 of Tolga Acar's thesis
 	// https://www.microsoft.com/en-us/research/wp-content/uploads/1998/06/97Acar.pdf
 	//
@@ -429,6 +431,7 @@ func (z *Element) Mul(x, y *Element) *Element {
 // x must be less than q
 func (z *Element) Square(x *Element) *Element {
 	// see Mul for algorithm documentation
+	MulCount++
 
 	var t0, t1, t2, t3, t4, t5 uint64
 	var u0, u1, u2, u3, u4, u5 uint64

@@ -17,6 +17,9 @@
 package bls12381
 
 import (
+	"fmt"
+	"github.com/consensys/gnark-crypto/ecc/bls12-381/fp"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bls12-381/fr"
 	"github.com/consensys/gnark-crypto/ecc/bls12-381/internal/fptower"
@@ -347,7 +350,14 @@ func (p *G2Jac) DoubleAssign() *G2Jac {
 // ScalarMultiplication computes and returns p = a ⋅ s
 // see https://www.iacr.org/archive/crypto2001/21390189.pdf
 func (p *G2Jac) ScalarMultiplication(a *G2Jac, s *big.Int) *G2Jac {
-	return p.mulGLV(a, s)
+	fp.MulCount = 0
+	fp.AddCount = 0
+	fp.SubCount = 0
+	fp.InvCount = 0
+	res := p.mulGLV(a, s)
+	fmt.Printf("G2 Scalar Multiplication (glv, jacobian): add - %d, sub - %d, mul - %d, inv - %d\n", fp.AddCount, fp.SubCount, fp.MulCount, fp.InvCount)
+
+	return res
 }
 
 // String returns canonical representation of the point in affine coordinates
@@ -440,8 +450,23 @@ func (p *G2Jac) psi(a *G2Jac) *G2Jac {
 // ϕ assigns p to ϕ(a) where ϕ: (x,y) → (w x,y), and returns p
 // where w is a third root of unity in 𝔽p
 func (p *G2Jac) phi(a *G2Jac) *G2Jac {
+	//fmt.Printf("jacobian is %s\n", a.String())
+	aff := G2Affine{}
+	aff.FromJacobian(a)
+	//fmt.Printf("affine is %s\n", aff.String())
 	p.Set(a)
+	/*
+		fmt.Printf("p is %s\n", p.String())
+		fmt.Println(p.X.A0.String())
+		fmt.Println(p.X.A1.String())
+		fmt.Println()
+	*/
+
 	p.X.MulByElement(&p.X, &thirdRootOneG2)
+	//fmt.Printf("phi.  thirdRootOneG2 = %s\n", thirdRootOneG2.String())
+	aff = G2Affine{}
+	aff.FromJacobian(p)
+	//fmt.Printf("affine is %s\n", aff.String())
 	return p
 }
 
@@ -455,12 +480,17 @@ func (p *G2Jac) mulGLV(a *G2Jac, s *big.Int) *G2Jac {
 
 	res.Set(&g2Infinity)
 
+	//fmt.Printf("point is %s\n", new(G2Affine).FromJacobian(a).String())
 	// table[b3b2b1b0-1] = b3b2 ⋅ ϕ(a) + b1b0*a
 	table[0].Set(a)
 	table[3].phi(a)
+	//fmt.Printf("phi(a) is %s\n", new(G2Affine).FromJacobian(&table[3]).String())
 
+	//fmt.Printf("glv basis is %+v\n", glvBasis)
 	// split the scalar, modifies ±a, ϕ(a) accordingly
+	//fmt.Printf("scalar is %s\n", s.String())
 	k := ecc.SplitScalar(s, &glvBasis)
+	//fmt.Printf("result 0,1 = %s,%s\n", k[0].String(), k[1].String())
 
 	if k[0].Sign() == -1 {
 		k[0].Neg(&k[0])

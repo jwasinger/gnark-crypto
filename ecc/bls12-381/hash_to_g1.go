@@ -17,6 +17,7 @@
 package bls12381
 
 import (
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bls12-381/fp"
 
 	"math/big"
@@ -180,7 +181,10 @@ func g1MulByZ(z *fp.Element, x *fp.Element) {
 // MapToCurve1 implements the SSWU map
 // No cofactor clearing or isogeny
 func MapToCurve1(u *fp.Element) G1Affine {
-
+	fp.MulCount = 0
+	fp.AddCount = 0
+	fp.SubCount = 0
+	fp.InvCount = 0
 	var sswuIsoCurveCoeffA = fp.Element{3415322872136444497, 9675504606121301699, 13284745414851768802, 2873609449387478652, 2897906769629812789, 1536947672689614213}
 	var sswuIsoCurveCoeffB = fp.Element{18129637713272545760, 11144507692959411567, 10108153527111632324, 9745270364868568433, 14587922135379007624, 469008097655535723}
 
@@ -245,6 +249,8 @@ func MapToCurve1(u *fp.Element) G1Affine {
 	// 24.   y = CMOV(-y, y, e1)
 
 	x.Div(&x, &tv4) // 25.   x = x / tv4
+
+	fmt.Printf("MapFpToG1: add - %d, sub - %d, mul - %d, inv - %d\n", fp.AddCount, fp.SubCount, fp.MulCount, fp.InvCount)
 
 	return G1Affine{x, y}
 }

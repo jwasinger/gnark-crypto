@@ -17,6 +17,7 @@
 package bls12381
 
 import (
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bls12-381/fp"
 	"github.com/consensys/gnark-crypto/ecc/bls12-381/internal/fptower"
 
@@ -216,7 +217,10 @@ func g2MulByZ(z *fptower.E2, x *fptower.E2) {
 // MapToCurve2 implements the SSWU map
 // No cofactor clearing or isogeny
 func MapToCurve2(u *fptower.E2) G2Affine {
-
+	fp.MulCount = 0
+	fp.AddCount = 0
+	fp.SubCount = 0
+	fp.InvCount = 0
 	var sswuIsoCurveCoeffA = fptower.E2{
 		A0: fp.Element{0},
 		A1: fp.Element{16517514583386313282, 74322656156451461, 16683759486841714365, 815493829203396097, 204518332920448171, 1306242806803223655},
@@ -290,6 +294,8 @@ func MapToCurve2(u *fptower.E2) G2Affine {
 	// 24.   y = CMOV(-y, y, e1)
 
 	x.Div(&x, &tv4) // 25.   x = x / tv4
+
+	fmt.Printf("MapFpToG2: add - %d, sub - %d, mul - %d, inv - %d\n", fp.AddCount, fp.SubCount, fp.MulCount, fp.InvCount)
 
 	return G2Affine{x, y}
 }
@@ -374,6 +380,7 @@ func EncodeToG2(msg, dst []byte) (G2Affine, error) {
 // dst stands for "domain separation tag", a string unique to the construction using the hash function
 // https://www.ietf.org/archive/id/draft-irtf-cfrg-hash-to-curve-16.html#roadmap
 func HashToG2(msg, dst []byte) (G2Affine, error) {
+
 	u, err := fp.Hash(msg, dst, 2*2)
 	if err != nil {
 		return G2Affine{}, err

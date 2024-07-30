@@ -16,6 +16,8 @@ package bls12381
 
 import (
 	"errors"
+	"fmt"
+	"github.com/consensys/gnark-crypto/ecc/bls12-381/fp"
 
 	"github.com/consensys/gnark-crypto/ecc/bls12-381/internal/fptower"
 )
@@ -46,12 +48,18 @@ func Pair(P []G1Affine, Q []G2Affine) (GT, error) {
 //
 // This function doesn't check that the inputs are in the correct subgroup. See IsInSubGroup.
 func PairingCheck(P []G1Affine, Q []G2Affine) (bool, error) {
+	fp.MulCount = 0
+	fp.AddCount = 0
+	fp.SubCount = 0
+	fp.InvCount = 0
 	f, err := Pair(P, Q)
 	if err != nil {
 		return false, err
 	}
 	var one GT
 	one.SetOne()
+	fmt.Printf("Pairing (%d pairs): add - %d, sub - %d, mul - %d, inv - %d\n", len(P), fp.AddCount, fp.SubCount, fp.MulCount, fp.InvCount)
+
 	return f.Equal(&one), nil
 }
 

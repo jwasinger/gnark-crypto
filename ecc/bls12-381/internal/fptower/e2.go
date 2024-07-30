@@ -143,8 +143,13 @@ func (z *E2) String() string {
 func (z *E2) MulByElement(x *E2, y *fp.Element) *E2 {
 	var yCopy fp.Element
 	yCopy.Set(y)
+	//fmt.Printf("MulByElement: mul %s by %s -> ", x.A0.String(), yCopy.String())
 	z.A0.Mul(&x.A0, &yCopy)
+	//fmt.Printf("%s\n", z.A0.String())
+
 	z.A1.Mul(&x.A1, &yCopy)
+	//fmt.Printf("foo: %s\n", z.A1.String())
+
 	return z
 }
 

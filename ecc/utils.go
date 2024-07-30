@@ -147,6 +147,7 @@ func SplitScalar(s *big.Int, l *Lattice) [2]big.Int {
 	// this increases the bounds on k1 and k2 by 1
 	// but we check this ScalarMultiplication alg. (not constant-time)
 	n := 2 * uint(((l.Det.BitLen()+32)>>6)<<6)
+	//fmt.Printf("split scalar.  b1=%s,b2=%s,n=%d\n", l.b1.String(), l.b2.String(), n)
 	k1.Rsh(&k1, n)
 	k2.Rsh(&k2, n)
 	v := getVector(l, &k1, &k2)

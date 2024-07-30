@@ -20,6 +20,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"math/big"
 	"math/bits"
@@ -418,9 +419,25 @@ func (z *Element) fromMont() *Element {
 	return z
 }
 
+var AddCount = 0
+var SubCount = 0
+var MulCount = 0
+var InvCount = 0
+
+func ResetOpCounts() {
+	AddCount = 0
+	SubCount = 0
+	MulCount = 0
+	InvCount = 0
+}
+
+func PrintOpCounts(caller string) {
+	fmt.Printf("%s- add: %d, sub: %d, mul: %d, inv: %d\n", caller, AddCount, SubCount, MulCount, InvCount)
+}
+
 // Add z = x + y (mod q)
 func (z *Element) Add(x, y *Element) *Element {
-
+	AddCount++
 	var carry uint64
 	z[0], carry = bits.Add64(x[0], y[0], 0)
 	z[1], carry = bits.Add64(x[1], y[1], carry)
@@ -444,7 +461,7 @@ func (z *Element) Add(x, y *Element) *Element {
 
 // Double z = x + x (mod q), aka Lsh 1
 func (z *Element) Double(x *Element) *Element {
-
+	AddCount++
 	var carry uint64
 	z[0], carry = bits.Add64(x[0], x[0], 0)
 	z[1], carry = bits.Add64(x[1], x[1], carry)
@@ -468,6 +485,7 @@ func (z *Element) Double(x *Element) *Element {
 
 // Sub z = x - y (mod q)
 func (z *Element) Sub(x, y *Element) *Element {
+	SubCount++
 	var b uint64
 	z[0], b = bits.Sub64(x[0], y[0], 0)
 	z[1], b = bits.Sub64(x[1], y[1], b)
@@ -489,6 +507,7 @@ func (z *Element) Sub(x, y *Element) *Element {
 
 // Neg z = q - x
 func (z *Element) Neg(x *Element) *Element {
+	SubCount++
 	if x.IsZero() {
 		z.SetZero()
 		return z
@@ -1018,7 +1037,7 @@ func (z *Element) Text(base int) string {
 		}
 	}
 	zz := *z
-	zz.fromMont()
+	//zz.fromMont()
 	if zz.FitsOnOneWord() {
 		return strconv.FormatUint(zz[0], base)
 	}
@@ -1370,6 +1389,7 @@ const (
 func (z *Element) Inverse(x *Element) *Element {
 	// Implements "Optimized Binary GCD for Modular Inversion"
 	// https://github.com/pornin/bingcd/blob/main/doc/bingcd.pdf
+	InvCount++
 
 	a := *x
 	b := Element{

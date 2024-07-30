@@ -18,6 +18,7 @@ package bls12381
 
 import (
 	"fmt"
+	"github.com/consensys/gnark-crypto/ecc/bls12-381/fp"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -236,6 +237,46 @@ func TestG2AffineConversions(t *testing.T) {
 		GenE2(),
 	))
 
+	properties.TestingRun(t, gopter.ConsoleReporter(false))
+}
+
+func TestG2ScalarMul(t *testing.T) {
+
+	parameters := gopter.DefaultTestParameters()
+	parameters.MinSuccessfulTests = 1
+
+	properties := gopter.NewProperties(parameters)
+
+	genScalar := GenFr()
+
+	/*
+		fmt.Println("v2")
+		fmt.Println(glvBasis.V2[0].String(), " , ", glvBasis.V2[1].String())
+		fmt.Println("v1")
+		fmt.Println(glvBasis.V1[0].String(), " , ", glvBasis.V1[1].String())
+	*/
+
+	properties.Property("[BLS12-381] scalar multiplication (GLV) should depend only on the scalar mod r", prop.ForAll(
+		func(s fr.Element) bool {
+			r := fr.Modulus()
+			var g G2Jac
+			g.mulGLV(&g2Gen, r)
+
+			var scalar, blindedScalar, rminusone big.Int
+			var op1, op2, op3, gneg G2Jac
+			rminusone.SetUint64(1).Sub(r, &rminusone)
+			op3.ScalarMultiplication(&g2Gen, &rminusone)
+			gneg.Neg(&g2Gen)
+			s.BigInt(&scalar)
+			blindedScalar.Mul(&scalar, r).Add(&blindedScalar, &scalar)
+			op1.ScalarMultiplication(&g2Gen, &scalar)
+			op2.ScalarMultiplication(&g2Gen, &blindedScalar)
+
+			return op1.Equal(&op2) && g.Equal(&g2Infinity) && !op1.Equal(&g2Infinity) && gneg.Equal(&op3)
+
+		},
+		genScalar,
+	))
 	properties.TestingRun(t, gopter.ConsoleReporter(false))
 }
 
@@ -565,8 +606,17 @@ func BenchmarkG2JacScalarMultiplication(b *testing.B) {
 	r := fr.Modulus()
 	scalar.SetString("5243587517512619047944770508185965837690552500527637822603658699938581184513", 10)
 	scalar.Add(&scalar, r)
+	var glv G2Jac
 
 	var doubleAndAdd G2Jac
+	fp.ResetOpCounts()
+	doubleAndAdd.mulWindowed(&g2Gen, &scalar)
+	fp.PrintOpCounts("g2mul-double-and-add")
+	fp.ResetOpCounts()
+	glv.mulGLV(&g2Gen, &scalar)
+	fp.PrintOpCounts("g2mul-glv")
+	fp.ResetOpCounts()
+	return
 
 	b.Run("double and add", func(b *testing.B) {
 		b.ResetTimer()
@@ -575,7 +625,6 @@ func BenchmarkG2JacScalarMultiplication(b *testing.B) {
 		}
 	})
 
-	var glv G2Jac
 	b.Run("GLV", func(b *testing.B) {
 		b.ResetTimer()
 		for j := 0; j < b.N; j++ {
@@ -597,6 +646,11 @@ func BenchmarkG2JacAdd(b *testing.B) {
 	var a G2Jac
 	a.Double(&g2Gen)
 	b.ResetTimer()
+	fp.ResetOpCounts()
+	a.AddAssign(&g2Gen)
+	fp.PrintOpCounts("g2-add-jac")
+	fp.ResetOpCounts()
+	return
 	for i := 0; i < b.N; i++ {
 		a.AddAssign(&g2Gen)
 	}

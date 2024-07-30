@@ -578,6 +578,16 @@ func BenchmarkG1JacScalarMultiplication(b *testing.B) {
 	scalar.Add(&scalar, r)
 
 	var doubleAndAdd G1Jac
+	var glv G1Jac
+
+	fp.ResetOpCounts()
+	doubleAndAdd.mulWindowed(&g1Gen, &scalar)
+	fp.PrintOpCounts("g1mul-double-and-add")
+	fp.ResetOpCounts()
+	glv.mulGLV(&g1Gen, &scalar)
+	fp.PrintOpCounts("g1mul-glv")
+	fp.ResetOpCounts()
+	return
 
 	b.Run("double and add", func(b *testing.B) {
 		b.ResetTimer()
@@ -586,7 +596,6 @@ func BenchmarkG1JacScalarMultiplication(b *testing.B) {
 		}
 	})
 
-	var glv G1Jac
 	b.Run("GLV", func(b *testing.B) {
 		b.ResetTimer()
 		for j := 0; j < b.N; j++ {
@@ -607,6 +616,11 @@ func BenchmarkG1AffineCofactorClearing(b *testing.B) {
 func BenchmarkG1JacAdd(b *testing.B) {
 	var a G1Jac
 	a.Double(&g1Gen)
+	fp.ResetOpCounts()
+	a.AddAssign(&g1Gen)
+	fp.PrintOpCounts("g2-add-jac")
+	fp.ResetOpCounts()
+	return
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		a.AddAssign(&g1Gen)
