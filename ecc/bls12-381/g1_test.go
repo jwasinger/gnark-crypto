@@ -579,7 +579,7 @@ func BenchmarkG1JacScalarMultiplication(b *testing.B) {
 
 	var doubleAndAdd G1Jac
 
-	b.Run("double and add", func(b *testing.B) {
+	b.Run("double and add (2 bit window)", func(b *testing.B) {
 		b.ResetTimer()
 		for j := 0; j < b.N; j++ {
 			doubleAndAdd.mulWindowed(&g1Gen, &scalar)
@@ -593,7 +593,12 @@ func BenchmarkG1JacScalarMultiplication(b *testing.B) {
 			glv.mulGLV(&g1Gen, &scalar)
 		}
 	})
-
+	b.Run("subgroup check", func(b *testing.B) {
+		b.ResetTimer()
+		for j := 0; j < b.N; j++ {
+			doubleAndAdd.IsInSubGroup()
+		}
+	})
 }
 
 func BenchmarkG1AffineCofactorClearing(b *testing.B) {
